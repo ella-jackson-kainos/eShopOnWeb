@@ -2,29 +2,15 @@ name: Renovate
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '*/15 * * * *' # every 15 minutes; adjust if you prefer less frequent
   workflow_dispatch:
 
 jobs:
   renovate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Run Renovate and capture log
-        id: renovate
-        run: |
-          # Run Renovate via the CLI so we can capture its output (alternative to the action)
-          npx renovate --config-file=.github/renovate.json --token="${{ secrets.RENOVATE_TOKEN }}" 2>&1 | tee renovate.log
-          echo "::set-output name=log::$(head -c 1000 renovate.log | sed 's/%/%%/g' | head -n 200)"  # truncated for summary
-
-      - name: Summarize Renovate run
-        if: always()
-        run: |
-          echo "## Renovate summary" >> $GITHUB_STEP_SUMMARY
-          if grep -q "No updates" renovate.log; then
-            echo "- No updates were available." >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- Updates detected (showing lines with PR titles):" >> $GITHUB_STEP_SUMMARY
-            grep -E "chore\\(deps\\): update dependency" renovate.log | head -n 10 >> $GITHUB_STEP_SUMMARY
-          fi
+      - name: Run Renovate
+        uses: renovatebot/github-action@v38
+        with:
+          token: ${{ secrets.RENOVATE_TOKEN }}
+          config-file: .github/renovate.json
